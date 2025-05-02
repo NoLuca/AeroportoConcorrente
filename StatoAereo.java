@@ -1,0 +1,10 @@
+public enum StatoAereo {
+    IN_HANGAR,
+    IN_SOSTA,
+    RIFORNIMENTO,
+    CARICO_BAGAGLI,
+    PRONTO_DECOLLARE,
+    IN_PISTA,
+    IN_VOLO,
+    ATTERRATO
+}
