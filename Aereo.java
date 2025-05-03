@@ -1,3 +1,5 @@
+import java.util.concurrent.Semaphore;
+
 public class Aereo {
     private int id;
     private String impresaCostruttrice;
@@ -6,6 +8,8 @@ public class Aereo {
     private int pesoMaxBagagli;
     private int pesoBagagliContenuti;
     private boolean viaggioAndataRitorno;
+    private StatoAereo stato = StatoAereo.IN_HANGAR;
+    private Semaphore semaforo = new Semaphore(1);
    
     public Aereo(int id, String impresaCostruttrice, int numMaxPasseggeri, int pesoMaxBagagli) {
         this.id = id;
@@ -45,6 +49,10 @@ public class Aereo {
         return viaggioAndataRitorno;
     }
 
+    public StatoAereo getStato() {
+        return stato;
+    }
+
     public void setId(int id) {
         this.id = id;
     }
@@ -71,5 +79,17 @@ public class Aereo {
 
     public void setViaggioAndataRitorno(boolean viaggioAndataRitorno) {
         this.viaggioAndataRitorno = viaggioAndataRitorno;
+    }
+
+    public void setStato(StatoAereo stato) {
+        this.stato = stato;
+    }
+
+    public void acquireServizio() throws InterruptedException{
+        semaforo.acquire();
+    }
+
+    public void releaseServizio(){
+        semaforo.release();
     }
 }
