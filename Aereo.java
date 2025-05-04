@@ -108,9 +108,9 @@ public class Aereo implements Runnable {
 
     public void run(){
         try{
-            Aereoporto.hangar.esci(this);
+            Aeroporto.hangar.esci(this);
             setStato(StatoAereo.IN_SOSTA);
-            Aereoporto.areaSosta.entra(this);
+            Aeroporto.areaSosta.entra(this);
 
             ExecutorService servizi = Executors.newFixedThreadPool(2);
             servizi.submit(new VeicoloRifornimento(this));
@@ -119,7 +119,7 @@ public class Aereo implements Runnable {
             servizi.awaitTermination(2, TimeUnit.SECONDS);
             setStato(StatoAereo.PRONTO_DECOLLARE);
 
-            Pista pista = Aereoporto.getPistaDisponibile();
+            Pista pista = Aeroporto.getPistaDisponibile();
             pista.occupa(this);
             setStato(StatoAereo.IN_PISTA);
             System.out.println("Aereo " + getId() + " decolla dalla pista " + pista.getId());
@@ -128,23 +128,23 @@ public class Aereo implements Runnable {
 
             Thread.sleep(1000);
 
-            pista = Aereoporto.getPistaDisponibile();
+            pista = Aeroporto.getPistaDisponibile();
             pista.occupa(this);
             setStato(StatoAereo.ATTERRATO);
             System.out.println("Aereo " + getId() + " atterra sulla pista " + pista.getId());
             pista.libera(this);
 
-            Aereoporto.areaSosta.esci(this);
+            Aeroporto.areaSosta.esci(this);
             ExecutorService servizi2 = Executors.newFixedThreadPool(2);
             servizi2.submit(new VeicoloBagagli(this, false));
             servizi2.shutdown();
             servizi2.awaitTermination(1, TimeUnit.SECONDS);
 
             if(!viaggioAndataRitorno){
-                Aereoporto.hangar.entra(this);
+                Aeroporto.hangar.entra(this);
                 setStato(StatoAereo.IN_HANGAR);
             }else{
-                Aereoporto.areaSosta.entra(this);
+                Aeroporto.areaSosta.entra(this);
                 setStato(StatoAereo.IN_SOSTA);
             }
         }catch(InterruptedException e){
