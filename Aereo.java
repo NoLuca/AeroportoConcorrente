@@ -1,6 +1,9 @@
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
-public class Aereo {
+public class Aereo implements Runnable {
     private int id;
     private String impresaCostruttrice;
     private int numMaxPasseggeri;
@@ -19,6 +22,16 @@ public class Aereo {
         this.numPasseggeri = 0;
         this.pesoBagagliContenuti = 0;
         this.viaggioAndataRitorno = false;
+    }
+    
+    public Aereo(int id, String impresaCostruttrice, int numMaxPasseggeri, int pesoMaxBagagli, boolean viaggioAndataRitorno) {
+        this.id = id;
+        this.impresaCostruttrice = impresaCostruttrice;
+        this.numMaxPasseggeri = numMaxPasseggeri;
+        this.pesoMaxBagagli = pesoMaxBagagli;
+        this.numPasseggeri = 0;
+        this.pesoBagagliContenuti = 0;
+        this.viaggioAndataRitorno = viaggioAndataRitorno;
     }
 
     public int getId() {
@@ -91,5 +104,51 @@ public class Aereo {
 
     public void releaseServizio(){
         semaforo.release();
+    }
+
+    public void run(){
+        try{
+            Aereoporto.hangar.esci(this);
+            setStato(StatoAereo.IN_SOSTA);
+            Aereoporto.areaSosta.entra(this);
+
+            ExecutorService servizi = Executors.newFixedThreadPool(2);
+            servizi.submit(new VeicoloRifornimento(this));
+            servizi.submit(new VeicoloBagagli(this, true));
+            servizi.shutdown();
+            servizi.awaitTermination(2, TimeUnit.SECONDS);
+            setStato(StatoAereo.PRONTO_DECOLLARE);
+
+            Pista pista = Aereoporto.getPistaDisponibile();
+            pista.occupa(this);
+            setStato(StatoAereo.IN_PISTA);
+            System.out.println("Aereo " + getId() + " decolla dalla pista " + pista.getId());
+            pista.libera(this);
+            setStato(StatoAereo.IN_VOLO);
+
+            Thread.sleep(1000);
+
+            pista = Aereoporto.getPistaDisponibile();
+            pista.occupa(this);
+            setStato(StatoAereo.ATTERRATO);
+            System.out.println("Aereo " + getId() + " atterra sulla pista " + pista.getId());
+            pista.libera(this);
+
+            Aereoporto.areaSosta.esci(this);
+            ExecutorService servizi2 = Executors.newFixedThreadPool(2);
+            servizi2.submit(new VeicoloBagagli(this, false));
+            servizi2.shutdown();
+            servizi2.awaitTermination(1, TimeUnit.SECONDS);
+
+            if(!viaggioAndataRitorno){
+                Aereoporto.hangar.entra(this);
+                setStato(StatoAereo.IN_HANGAR);
+            }else{
+                Aereoporto.areaSosta.entra(this);
+                setStato(StatoAereo.IN_SOSTA);
+            }
+        }catch(InterruptedException e){
+            Thread.currentThread().interrupt();
+        }
     }
 }
